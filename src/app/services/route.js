@@ -73,7 +73,7 @@ export async function POST(req) {
           amount,
         })
       )
-      .addMemo(Memo.text("Thank for Playing"))
+      .addMemo(Memo.text("Thank you for Playing"))
       .setTimeout(30)
       .build();
 

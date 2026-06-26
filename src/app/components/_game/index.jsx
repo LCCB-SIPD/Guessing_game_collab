@@ -38,7 +38,7 @@ export default function InGame() {
     const { closeModal } = useWalletModal();
 
     async function ClaimRewards() {
-      const scoreMultiply = Number(gameState.score / 2).toFixed(4);
+      const scoreDivided = Number(gameState.score / 2).toFixed(4);
       
       if (context === "EVM") return alert("Invalid Wallet");
       if (context === "MULTI" || context === "NONE") return handleDisconnect();
@@ -46,15 +46,17 @@ export default function InGame() {
       setLoading(true);
       const response = await Fetch_to(json_route.Claim, {
         destination: stellar.address,
-        amount: scoreMultiply,
+        amount: scoreDivided,
       });
 
       if (response.success) {
-        alert("Congrats you win");
+        alert("Congrats You Win " + scoreDivided);
         refreshBalances();
         restartFromBeginning();
+        setLoading(false);
       } else {
         alert("something went wrong");
+        setLoading(false);
       }
     }
 

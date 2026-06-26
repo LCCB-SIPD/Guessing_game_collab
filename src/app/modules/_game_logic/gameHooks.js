@@ -94,7 +94,9 @@ export const useGameTimer = (initialTime = 30) => {
     const onExpireRef = useRef(null);
 
     const start = useCallback((onExpire) => {
-        if (isRunning && !isPaused) return;
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
         
         onExpireRef.current = onExpire;
         setIsRunning(true);
@@ -106,6 +108,8 @@ export const useGameTimer = (initialTime = 30) => {
 
                 const newTime = prev - 1;
                 if (newTime <= 0) {
+                    clearInterval(intervalRef.current);
+                    intervalRef.current = null;
                     setIsRunning(false);
                     if (onExpireRef.current) onExpireRef.current();
                     return 0;
@@ -113,7 +117,7 @@ export const useGameTimer = (initialTime = 30) => {
                 return newTime;
             });
         }, 1000);
-    }, [isRunning, isPaused]);
+    }, []);
 
     const pause = useCallback(() => {
         setIsPaused(true);
@@ -286,6 +290,12 @@ export const useWordScrambleGame = () => {
     
     const timer = useGameTimer(30);
     const achievementManager = useAchievementManager();
+    const handleTimeUpRef = useRef(null);
+    const gameStateRef = useRef(gameState);
+
+    useEffect(() => {
+        gameStateRef.current = gameState;
+    }, [gameState]);
 
     // Initialize game data
     useEffect(() => {
@@ -352,30 +362,57 @@ export const useWordScrambleGame = () => {
                 roundStartTime: Date.now()
             }));
             timer.reset(30);
-            timer.start(() => handleTimeUp());
+            timer.start(() => handleTimeUpRef.current?.());
         }
     }, [wordDatabase, achievementManager, resetGameStats, resetPowerUps, timer]);
 
-    const nextWord = useCallback(() => {
-        if (gameState.round >= wordDatabase.length) {
+    const endGame = useCallback(() => {
+        setGameState(prev => ({
+            ...prev,
+            status: 'finished',
+            currentView: 'end'
+        }));
+        timer.stop();
+    }, [timer]);
+
+    const advanceToNextWord = useCallback(() => {
+        const currentRound = gameStateRef.current.round;
+
+        if (currentRound >= wordDatabase.length) {
             endGame();
             return;
         }
 
-        const nextWordItem = wordDatabase[gameState.round];
-        setGameState(prev => ({
-            ...prev,
-            currentWord: nextWordItem,
-            roundStartTime: Date.now(),
-            userInput: '',
-            inputState: 'normal',
-            showTrivia: false,
-            firstLetterHint: ''
-        }));
-        
-        timer.reset(30);
-        timer.start(() => handleTimeUp());
-    }, [gameState.round, wordDatabase, timer]);
+        const nextWordItem = wordDatabase[currentRound];
+
+        setGameState(prev => {
+            if (!nextWordItem) {
+                return {
+                    ...prev,
+                    status: 'finished',
+                    currentView: 'end'
+                };
+            }
+
+            return {
+                ...prev,
+                round: prev.round + 1,
+                currentWord: nextWordItem,
+                roundStartTime: Date.now(),
+                userInput: '',
+                inputState: 'normal',
+                showTrivia: false,
+                firstLetterHint: ''
+            };
+        });
+
+        if (nextWordItem) {
+            timer.reset(30);
+            timer.start(() => handleTimeUpRef.current?.());
+        } else {
+            timer.stop();
+        }
+    }, [endGame, wordDatabase, timer]);
 
     const submitGuess = useCallback(() => {
         if (gameState.status !== 'playing' || !gameState.userInput.trim()) return;
@@ -466,17 +503,13 @@ export const useWordScrambleGame = () => {
         }));
 
         setTimeout(() => {
-            if (gameState.round >= wordDatabase.length) {
-                endGame();
-            } else {
-                setGameState(prev => ({
-                    ...prev,
-                    round: prev.round + 1
-                }));
-                nextWord();
-            }
+            advanceToNextWord();
         }, 2000);
-    }, [gameState.round, wordDatabase.length, nextWord]);
+    }, [advanceToNextWord]);
+
+    useEffect(() => {
+        handleTimeUpRef.current = handleTimeUp;
+    }, [handleTimeUp]);
 
     const closeTriviaModal = useCallback(() => {
         setGameState(prev => ({
@@ -485,26 +518,9 @@ export const useWordScrambleGame = () => {
         }));
         
         setTimeout(() => {
-            if (gameState.round >= wordDatabase.length) {
-                endGame();
-            } else {
-                setGameState(prev => ({
-                    ...prev,
-                    round: prev.round + 1
-                }));
-                nextWord();
-            }
+            advanceToNextWord();
         }, 300);
-    }, [gameState.round, wordDatabase.length, nextWord]);
-
-    const endGame = useCallback(() => {
-        setGameState(prev => ({
-            ...prev,
-            status: 'finished',
-            currentView: 'end'
-        }));
-        timer.stop();
-    }, [timer]);
+    }, [advanceToNextWord]);
 
     const restartFromBeginning = useCallback(() => {
         setGameState(prev => ({
@@ -541,11 +557,7 @@ export const useWordScrambleGame = () => {
             }));
             timer.stop();
             setTimeout(() => {
-                setGameState(prev => ({
-                    ...prev,
-                    round: prev.round + 1
-                }));
-                nextWord();
+                advanceToNextWord();
             }, 2000);
             success = true;
         } else if (type === 'time') {
@@ -562,7 +574,7 @@ export const useWordScrambleGame = () => {
                 }
             }));
         }
-    }, [gameState, powerUps, timer, nextWord]);
+    }, [gameState, powerUps, timer, advanceToNextWord]);
 
     const updateUserInput = useCallback((value) => {
         setGameState(prev => ({
