@@ -1,6 +1,10 @@
-# ⌨️ Guess the Correct Word
+# ⌨️ Guessing Game Collab (SIPD) - CordyStackX & martjung-developer
+
+**Reference Repo** https://github.com/martjung-developer/word-scrabble.git
 
 A fast-paced typing game built with **Next.js** and powered by the **Stellar Network**. Test your typing speed and accuracy by entering the displayed word before time runs out. Earn points and claim Stellar rewards based on your final score.
+
+Originally built as a traditional web application, this project was later **migrated to Stellar Web3**, adding Stellar wallet integration, blockchain-based reward claiming, and secure server-side transaction signing using the Stellar SDK.
 
 ## 🌐 Live Demo
 
@@ -80,12 +84,6 @@ The higher your score, the greater your reward.
 * Transactions are signed server-side.
 * Players never have access to the reward wallet.
 * Rewards are sent securely through the Stellar network.
-
----
-
-## 🌐 Live Demo
-
-https://guessing-game-collab.vercel.app
 
 ---
 
