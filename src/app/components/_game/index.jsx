@@ -155,7 +155,7 @@ export default function InGame() {
                 <div className={`game-wrapper ${gameState.inputState === 'correct' ? 'success-animation' : ''}`}> 
                     {/* Home Screen */}
                     <div className={`start-screen ${gameState.currentView === 'home' ? 'active' : ''}`}>
-                        <h1>Word Scramble Game</h1>
+                        <h1>Guess The Word</h1>
                         <p>Mahampang nata and let us have a fun taya gha! </p>
                         {connected ? (<button className="glass-btn" disabled={loading} onClick={async() => {
                           if (context === "EVM") return alert("Invalid Wallet Please use Stellar");
