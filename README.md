@@ -6,7 +6,7 @@ A fast-paced typing game built with **Next.js** and powered by the **Stellar Net
 
 **Play Now:** https://guessing-game-collab.vercel.app
 
-**Repo** https://github.com/cordyStackX/Guessing_game_collab.git
+**Repo** https://github.com/LCCB-SIPD/Guessing_game_collab.git
 
 ---
 
