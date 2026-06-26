@@ -136,10 +136,10 @@ export default function InGame() {
             <div className="game-container">
               {connected ? (
                 <div style={{ 
-                  width: "25%",
+                  width: "330px",
                   position: "fixed", 
                   top: "1rem", 
-                  right: "2.25rem", 
+                  right: "1.25rem", 
                   background: "#505050", 
                   padding: "1rem",
                   borderRadius: "10px",
