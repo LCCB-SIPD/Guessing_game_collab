@@ -1,8 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useWordScrambleGame } from '../../modules/_game_logic/gameHooks';
-// import { ConnectWalletBT } from "@cordystackx/cordy_minikit";
+import { useWalletModal, useWalletStatus, useDisconnectWallets, ConnectWalletBT, CordyStackTransStellar } from '@cordystackx/cordy_minikit';
+import { Fetch_to } from '@/app/utilities';
+import json_route from "@/app/config/json_route/route.json";
 
 export default function InGame() {
+    const [connected, setConnected] = useState(false);
+    const [loading, setLoading] = useState(false);
     const {
         gameState,
         timer,
@@ -16,6 +20,44 @@ export default function InGame() {
         updateUserInput
     } = useWordScrambleGame();
 
+    const {
+      context,
+      evm,
+      stellar,
+      refreshBalances
+    } = useWalletStatus();
+
+    
+
+    const {
+      disconnectAll,
+      disconnectStellar,
+      disconnectEVM
+    } = useDisconnectWallets();
+
+    const { closeModal } = useWalletModal();
+
+    async function ClaimRewards() {
+      const scoreMultiply = Number(gameState.score / 4).toFixed(4);
+      
+      if (context === "EVM") return alert("Invalid Wallet");
+      if (context === "MULTI" || context === "NONE") return handleDisconnect();
+      
+      setLoading(true);
+      const response = await Fetch_to(json_route.Claim, {
+        destination: stellar.address,
+        amount: scoreMultiply,
+      });
+
+      if (response.success) {
+        alert("Congrats you win");
+        refreshBalances();
+        restartFromBeginning();
+      } else {
+        alert("something went wrong");
+      }
+    }
+
     // Handle keyboard events
     useEffect(() => {
         const handleKeyPress = (e) => {
@@ -27,6 +69,37 @@ export default function InGame() {
         document.addEventListener('keypress', handleKeyPress);
         return () => document.removeEventListener('keypress', handleKeyPress);
     }, [submitGuess, gameState.status]);
+
+    useEffect(() => {
+    if (
+      (context === "NONE" || context === "MULTI")
+    ) {
+      return;
+    }
+    
+
+    const signIn = async () => {
+      closeModal();
+      await refreshBalances();
+
+      const address =
+        context === "EVM"
+          ? evm.address
+          : stellar.address;
+
+      if (address) {
+        if (context === "EVM") await disconnectStellar();
+        if (context === "Non-EVM") await disconnectEVM();
+        setConnected(true);
+      } else {
+        alert(response.message);
+        handleDisconnect();
+        return;
+      }
+    };
+
+    signIn();
+  }, [context]);
 
     // Calculate progress percentage
     const progressPercentage = gameState.round > 0 ? (gameState.round / 20) * 100 : 0;
@@ -45,15 +118,58 @@ export default function InGame() {
         return 'Nice try!';
     };
 
+    async function handleDisconnect() {                                                                                
+      const success = await disconnectAll();                                                                           
+                                                                                                                        
+      if (success) {                                                                                                   
+        console.log("Wallets disconnected");
+        window.location.reload();                                                               
+      } else {                                                                                                         
+        console.log("Failed to disconnect wallets");                                                             
+      }                                                                                                                
+    }
+
     return (
         <>
             <div className="game-container">
+              {connected ? (
+                <div style={{ 
+                  width: "25%",
+                  position: "fixed", 
+                  top: "1rem", 
+                  right: "2.25rem", 
+                  background: "#505050", 
+                  padding: "1rem",
+                  borderRadius: "10px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}>
+                  <h4>Balance: {context === "EVM" ? "Invalid Wallets" : Number(stellar.balance).toFixed(4) } </h4>
+                  <button className='glass-btn' style={{ 
+                    background: "#f00",
+                    fontWeight: "bold"
+                  }} onClick={handleDisconnect}>DisConnect</button>
+                </div>
+              ) : null}
                 <div className={`game-wrapper ${gameState.inputState === 'correct' ? 'success-animation' : ''}`}> 
                     {/* Home Screen */}
                     <div className={`start-screen ${gameState.currentView === 'home' ? 'active' : ''}`}>
                         <h1>Word Scramble Game</h1>
                         <p>Mahampang nata and let us have a fun taya gha! </p>
-                        <button className="glass-btn" onClick={startNewGame}>Start Game</button>
+                        {connected ? (<button className="glass-btn" disabled={loading} onClick={async() => {
+                          if (context === "EVM") return alert("Invalid Wallet Please use Stellar");
+                          setLoading(true);
+                          const response = await CordyStackTransStellar(process.env.NEXT_PUBLIC_BANKER, 2000, { memo: "Play It Now" });
+                          if (response) {
+                            refreshBalances();
+                            startNewGame();
+                            setLoading(false);
+                          } else {
+                            alert("Something Went Wrong");
+                            setLoading(false);
+                          }
+                        }}>{loading ? "Laoding..." : "Start Game"}</button>) : (<ConnectWalletBT className='glass-btn' />)}
                     </div>
 
                     {/* Game Play Screen */}
@@ -170,7 +286,7 @@ export default function InGame() {
                             </div>
                         )}
                         
-                        <button className="glass-btn" onClick={restartFromBeginning}>Play Again</button>
+                        <button className="glass-btn" onClick={ClaimRewards}> {loading ? "Claiming..." : "Claim & Play Again"} </button>
                     </div>
                 </div> 
             </div>
