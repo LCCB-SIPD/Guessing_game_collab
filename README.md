@@ -1,4 +1,4 @@
-# ⌨️ Guessing Game Collab (SIPD) - CordyStackX & martjung-developer
+# ⌨️ Guess The Word (SIPD) - CordyStackX & martjung-developer
 
 **Reference Repo** https://github.com/martjung-developer/word-scrabble.git
 
@@ -71,7 +71,7 @@ http://localhost:3000
 Rewards are calculated using:
 
 ```text
-Reward = Score / 4
+Reward = Score / 2
 ```
 
 The higher your score, the greater your reward.

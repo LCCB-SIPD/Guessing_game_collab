@@ -38,7 +38,7 @@ export default function InGame() {
     const { closeModal } = useWalletModal();
 
     async function ClaimRewards() {
-      const scoreMultiply = Number(gameState.score / 4).toFixed(4);
+      const scoreMultiply = Number(gameState.score / 2).toFixed(4);
       
       if (context === "EVM") return alert("Invalid Wallet");
       if (context === "MULTI" || context === "NONE") return handleDisconnect();
