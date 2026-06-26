@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "World Scramble",
-  description: "Develop By CordyStackX & ",
+  title: "Guess The Word",
+  description: "Develop By CordyStackX & martjung-developer with SIPD Team",
 };
 
 export default function RootLayout({ children }) {
